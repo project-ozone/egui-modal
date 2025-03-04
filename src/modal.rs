@@ -1,7 +1,7 @@
 use egui::{
     emath::{Align, Align2},
     epaint::{Color32, Pos2, Rounding},
-    Area, Button, Context, Id, Layout, Response, RichText, Sense, Ui, WidgetText, Window,
+    Area, Button, Context, Frame, Id, Layout, Response, RichText, Sense, Ui, WidgetText, Window,
 };
 
 const ERROR_ICON_COLOR: Color32 = Color32::from_rgb(200, 90, 90);
@@ -222,6 +222,7 @@ pub struct Modal {
     ctx: Context,
     id: Id,
     window_id: Id,
+    custom_frame: Option<Frame>,
 }
 
 fn ui_with_margin<R>(ui: &mut Ui, margin: f32, add_contents: impl FnOnce(&mut Ui) -> R) {
@@ -241,6 +242,7 @@ impl Modal {
             style: ModalStyle::default(),
             ctx: ctx.clone(),
             close_on_outside_click: false,
+            custom_frame: None,
         }
     }
 
@@ -296,6 +298,12 @@ impl Modal {
     /// Change the [`ModalStyle`] of the modal upon creation.
     pub fn with_style(mut self, style: &ModalStyle) -> Self {
         self.style = style.clone();
+        self
+    }
+
+    /// Change the [`Frame`] of the modal upon creation.
+    pub fn with_custom_frame(mut self, frame: Frame) -> Self {
+        self.custom_frame = Some(frame);
         self
     }
 
@@ -514,6 +522,10 @@ impl Modal {
                 .anchor(Align2::CENTER_CENTER, [0., 0.])
                 .resizable(false);
 
+            if let Some(frame) = self.custom_frame {
+                window = window.frame(frame);
+            }
+
             let recalculating_height =
                 self.style.default_height.is_some() && modal_state.last_frame_height.is_none();
 
@@ -564,7 +576,7 @@ impl Modal {
     pub fn dialog(&self) -> DialogBuilder {
         DialogBuilder {
             data: DialogData::default(),
-            modal_id: self.id.clone(),
+            modal_id: self.id,
             ctx: self.ctx.clone(),
         }
     }
